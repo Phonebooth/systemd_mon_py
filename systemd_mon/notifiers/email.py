@@ -41,6 +41,12 @@ class Email(Base):
         self._send_mail(subject, body)
         self.log("sent email notification")
 
+    @staticmethod
+    def _as_str(value):
+        if isinstance(value, list):
+            return ", ".join(value)
+        return value
+
     def _send_mail(self, subject, body):
         self.debug("Sending email to {0}:".format(self.options["to"]))
         self.debug(' -> Subject: "{0}"'.format(subject))
@@ -48,8 +54,8 @@ class Email(Base):
 
         msg = MIMEText(body)
         msg["Subject"] = subject
-        msg["To"] = self.options["to"]
-        msg["From"] = self.options.get("from", "systemdmon@localhost")
+        msg["To"] = self._as_str(self.options["to"])
+        msg["From"] = self._as_str(self.options.get("from", "systemdmon@localhost"))
 
         smtp_opts = self.options.get("smtp", {})
         host = smtp_opts.get("address", "localhost")
