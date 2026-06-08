@@ -10,11 +10,11 @@ class DBusUnit(object):
     and pushes :class:`~systemd_mon.state.State` snapshots onto the queue."""
 
     def __init__(self, name, path, dbus_object):
+        import dbus
         self.name = name
         self.path = path
         self._dbus_object = dbus_object
-        self._dbus_object.IntrospectionInterface.Introspect()
-        self._props = dbus_object.GetAll
+        self._props_iface = dbus.Interface(dbus_object, IFACE_PROPS)
         self.maybe_service_type = self._service_type()
 
     def register_listener(self, queue):
@@ -31,10 +31,7 @@ class DBusUnit(object):
         )
 
     def property(self, prop_name):
-        import dbus
-        obj = self._dbus_object
-        props_iface = dbus.Interface(obj, IFACE_PROPS)
-        return props_iface.Get(IFACE_UNIT, prop_name)
+        return self._props_iface.Get(IFACE_UNIT, prop_name)
 
     def __str__(self):
         if self.maybe_service_type:
@@ -53,7 +50,6 @@ class DBusUnit(object):
     def _service_type(self):
         import dbus
         try:
-            iface = dbus.Interface(self._dbus_object, IFACE_PROPS)
-            return str(iface.Get(IFACE_SERVICE, "Type"))
+            return str(self._props_iface.Get(IFACE_SERVICE, "Type"))
         except dbus.exceptions.DBusException:
             return None
